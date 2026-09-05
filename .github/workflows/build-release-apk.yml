@@ -1,0 +1,55 @@
+name: Build Release APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+    
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@v3
+    
+    - name: Setup NDK
+      uses: nttpc/setup-ndk@v1
+      with:
+        ndk-version: r27b
+    
+    - name: Generate keystore
+      run: |
+        cd android
+        bash generate-keystore.sh
+    
+    - name: Build Release APK
+      run: |
+        cd android
+        ./gradlew assembleRelease -x lint --quiet
+    
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-apk
+        path: android/app/build/outputs/apk/release/app-release.apk
+    
+    - name: Create Release
+      uses: actions/create-release@v1
+      if: success()
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ hashFiles('version') }}
+        release_name: Release ${{ hashFiles('version') }}
+        draft: false
+        prerelease: false
