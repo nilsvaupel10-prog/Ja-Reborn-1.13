@@ -19,6 +19,11 @@ jobs:
         distribution: 'temurin'
         cache: gradle
     
+    - name: Set up Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+    
     - name: Set up Android SDK
       uses: android-actions/setup-android@v3
     
