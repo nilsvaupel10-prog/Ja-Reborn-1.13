@@ -31,6 +31,9 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.ViewModelProvider
 import com.ja2.reborn.databinding.ActivityLauncherBinding
+import com.ja2.reborn.mods.ModScanResult
+import com.ja2.reborn.mods.ModScanner
+import com.ja2.reborn.mods.ModsDialog
 import com.ja2.reborn.ui.main.SectionsPagerAdapter
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
@@ -51,9 +54,9 @@ class LauncherActivity : AppCompatActivity() {
     private val jsonFormat = Json {
         prettyPrint = true
     }
-    private val ja2JsonFilename = ".ja2/ja2.json"
     private val cheatsJsonFilename = ".ja2/cheats.json"
     private lateinit var configurationModel: ConfigurationModel
+    private lateinit var configRepository: Ja2ConfigRepository
     private var startPendingStoragePermission = false
 
     override fun attachBaseContext(newBase: Context) {
@@ -66,6 +69,10 @@ class LauncherActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         configurationModel = ViewModelProvider(this)[ConfigurationModel::class.java]
+        // `.ja2` and `.ja2/mods` are the same directories the native engine reads its
+        // configuration and its mods from, so the launcher creates them up front.
+        configRepository = Ja2ConfigRepository(applicationContext)
+        configRepository.ensureDirectories()
         loadJA2Json()
         syncGameVersionWithLanguageSelection()
         loadCheatsJson()
@@ -239,14 +246,29 @@ class LauncherActivity : AppCompatActivity() {
             ) {
                 saveJA2Json()
                 saveCheatsJson()
+                logEnabledMods()
                 NativeExceptionContainer.resetException()
                 val intent = Intent(this@LauncherActivity, RebornActivity::class.java)
                 startActivity(intent)
             }
         } catch (e: IOException) {
-            val message = "Could not write ${ja2JsonPath}: ${e.message}"
+            val message = "Could not write ${configRepository.configFile.absolutePath}: ${e.message}"
             Log.e(activityLogTag, message)
             Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /**
+     * Mirrors the enabled mods into the log so a broken mod setup can be traced from
+     * `ja2.log`. The native engine reads the same `mods` array from `ja2.json`; no command line
+     * argument is passed to it, see `RebornActivity.getArguments`.
+     */
+    private fun logEnabledMods() {
+        val mods = configurationModel.mods.value ?: emptyList()
+        if (mods.isEmpty()) {
+            Log.i(activityLogTag, "Starting game without mods")
+        } else {
+            Log.i(activityLogTag, "Starting game with mods (lowest to highest priority): ${mods.joinToString(", ")}")
         }
     }
 
@@ -381,75 +403,89 @@ class LauncherActivity : AppCompatActivity() {
     private fun dp(value: Int): Int =
         (value * resources.displayMetrics.density).toInt()
 
-    private val ja2JsonPath: String
-        get() {
-            return "${applicationContext.filesDir.absolutePath}/$ja2JsonFilename"
+    private fun loadJA2Json() {
+        val snapshot = configRepository.load()
+        when (snapshot.loadState) {
+            Ja2ConfigLoadState.MISSING -> Log.i(activityLogTag, "No ja2.json found, using default settings")
+            Ja2ConfigLoadState.INVALID -> Log.w(activityLogTag, "ja2.json could not be read, using default settings")
+            Ja2ConfigLoadState.LOADED -> Unit
+        }
+        val json = snapshot.config
+
+        configurationModel.setVanillaGameDir(json.vanillaGameDir)
+        configurationModel.setSaveGameDir(json.saveGameDir)
+
+        if (json.vanillaGameVersion != null) {
+            configurationModel.setVanillaGameVersion(json.vanillaGameVersion)
+        } else {
+            configurationModel.setVanillaGameVersion(VanillaVersion.DEFAULT)
         }
 
-    private fun loadJA2Json() {
+        // Resolution mode migration
+        val resolvedMode = when {
+            json.resolutionMode != null -> json.resolutionMode
+            json.resolution != null && json.resolution.width == 640u && json.resolution.height == 480u ->
+                ResolutionMode.RETRO
+            else -> ResolutionMode.MODERN
+        }
+        configurationModel.setResolutionMode(resolvedMode)
+        val expertSettings = json.expertSettings == true
+        configurationModel.setExpertSettings(expertSettings)
+
+        val (nativeW, nativeH) = getNativeMetrics()
+        if (expertSettings && json.resolution != null) {
+            configurationModel.setResolution(json.resolution)
+        } else {
+            configurationModel.setResolution(ResolutionPolicy.calculate(resolvedMode, nativeW, nativeH))
+        }
+
+        if (expertSettings && json.scalingQuality != null) {
+            configurationModel.setScalingQuality(json.scalingQuality)
+        } else {
+            configurationModel.setScalingQuality(ScalingQuality.DEFAULT)
+        }
+
+        if (expertSettings && json.mouseMode != null) {
+            configurationModel.setMouseMode(json.mouseMode)
+        } else {
+            configurationModel.setMouseMode(MouseMode.DEFAULT)
+        }
+        if (json.debug != null) {
+            configurationModel.setDebug(json.debug)
+        } else {
+            configurationModel.setDebug(false)
+        }
+
+        // The mods of `ja2.json` are folder names below `.ja2/mods`, in load order.
+        configurationModel.setMods(snapshot.mods)
+    }
+
+    /** Everything the launcher found in the mods directory of the `.ja2` configuration. */
+    fun scanMods(): ModScanResult = ModScanner.scan(configRepository.modsDir, assets)
+
+    /** Opens the mod selection and stores the applied selection in `ja2.json`. */
+    fun openModsDialog() {
+        ModsDialog(
+            context = this,
+            modsDir = configRepository.modsDir,
+            assetManager = assets,
+            enabledModIds = configurationModel.mods.value ?: emptyList(),
+            onApply = { selectedMods -> applyModsSelection(selectedMods) }
+        ).show()
+    }
+
+    private fun applyModsSelection(selectedMods: List<String>) {
+        configurationModel.setMods(selectedMods)
         try {
-            val text = File(ja2JsonPath).readText()
-            val json: Ja2Json = jsonFormat.decodeFromString(text)
-
-            configurationModel.setVanillaGameDir(json.vanillaGameDir)
-            configurationModel.setSaveGameDir(json.saveGameDir)
-
-            if (json.vanillaGameVersion != null) {
-                configurationModel.setVanillaGameVersion(json.vanillaGameVersion)
-            } else {
-                configurationModel.setVanillaGameVersion(VanillaVersion.DEFAULT)
-            }
-
-            // Resolution mode migration
-            val resolvedMode = when {
-                json.resolutionMode != null -> json.resolutionMode
-                json.resolution != null && json.resolution.width == 640u && json.resolution.height == 480u ->
-                    ResolutionMode.RETRO
-                else -> ResolutionMode.MODERN
-            }
-            configurationModel.setResolutionMode(resolvedMode)
-            val expertSettings = json.expertSettings == true
-            configurationModel.setExpertSettings(expertSettings)
-
-            val (nativeW, nativeH) = getNativeMetrics()
-            if (expertSettings && json.resolution != null) {
-                configurationModel.setResolution(json.resolution)
-            } else {
-                configurationModel.setResolution(ResolutionPolicy.calculate(resolvedMode, nativeW, nativeH))
-            }
-
-            if (expertSettings && json.scalingQuality != null) {
-                configurationModel.setScalingQuality(json.scalingQuality)
-            } else {
-                configurationModel.setScalingQuality(ScalingQuality.DEFAULT)
-            }
-
-            if (expertSettings && json.mouseMode != null) {
-                configurationModel.setMouseMode(json.mouseMode)
-            } else {
-                configurationModel.setMouseMode(MouseMode.DEFAULT)
-            }
-            if (json.debug != null) {
-                configurationModel.setDebug(json.debug)
-            } else {
-                configurationModel.setDebug(false)
-            }
-        } catch (e: SerializationException) {
-            Log.w(activityLogTag, "Could not decode ja2.json: ${e.message}")
-            configurationModel.setVanillaGameVersion(VanillaVersion.ENGLISH)
-            configurationModel.setScalingQuality(ScalingQuality.DEFAULT)
-            configurationModel.setMouseMode(MouseMode.DEFAULT)
-            configurationModel.setResolution(getRecommendedResolution())
-            configurationModel.setExpertSettings(false)
-            configurationModel.setDebug(false)
+            saveJA2Json()
+            Toast.makeText(
+                this,
+                getString(R.string.mods_saved_toast, selectedMods.size),
+                Toast.LENGTH_SHORT
+            ).show()
         } catch (e: IOException) {
-            Log.w(activityLogTag, "Could not read $ja2JsonPath: ${e.message}")
-            configurationModel.setVanillaGameVersion(VanillaVersion.ENGLISH)
-            configurationModel.setScalingQuality(ScalingQuality.DEFAULT)
-            configurationModel.setMouseMode(MouseMode.DEFAULT)
-            configurationModel.setResolution(getRecommendedResolution())
-            configurationModel.setExpertSettings(false)
-            configurationModel.setDebug(false)
+            Log.e(activityLogTag, "Could not write ${configRepository.configFile.absolutePath}", e)
+            Toast.makeText(this, R.string.mods_save_failed_toast, Toast.LENGTH_LONG).show()
         }
     }
 
@@ -482,21 +518,20 @@ class LauncherActivity : AppCompatActivity() {
         }
 
         val json = Ja2Json(
-            configurationModel.vanillaGameDir.value,
-            configurationModel.vanillaGameVersion.value,
-            configurationModel.saveGameDir.value,
-            configurationModel.resolution.value,
-            configurationModel.resolutionMode.value,
-            configurationModel.scalingQuality.value,
-            configurationModel.mouseMode.value,
-            configurationModel.expertSettings.value,
-            configurationModel.debug.value
+            vanillaGameDir = configurationModel.vanillaGameDir.value,
+            vanillaGameVersion = configurationModel.vanillaGameVersion.value,
+            saveGameDir = configurationModel.saveGameDir.value,
+            resolution = configurationModel.resolution.value,
+            resolutionMode = configurationModel.resolutionMode.value,
+            scalingQuality = configurationModel.scalingQuality.value,
+            mouseMode = configurationModel.mouseMode.value,
+            expertSettings = configurationModel.expertSettings.value,
+            debug = configurationModel.debug.value,
+            mods = configurationModel.mods.value ?: emptyList()
         )
-        val parentDir = File(ja2JsonPath).parentFile
-        if (parentDir?.exists() != true) {
-            parentDir?.mkdirs()
-        }
-        File(ja2JsonPath).writeText(jsonFormat.encodeToString(json))
+        // The file is read again so that settings the launcher has no UI for, such as
+        // `brightness`, are kept exactly as the user wrote them.
+        configRepository.save(configRepository.load().withConfig(json))
     }
 
     private val cheatsJsonPath: String
@@ -520,7 +555,7 @@ class LauncherActivity : AppCompatActivity() {
 
     private fun deleteStaleGameSession() {
         try {
-            val file = File(applicationContext.filesDir, ".ja2/game_session")
+            val file = File(configRepository.configDir, "game_session")
             if (file.exists()) file.delete()
         } catch (e: Exception) {
             Log.w(activityLogTag, "Could not delete stale game session marker: ${e.message}")

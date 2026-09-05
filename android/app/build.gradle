@@ -90,6 +90,14 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
+    testOptions {
+        unitTests {
+            // The launcher helpers log through android.util.Log, which has no implementation in
+            // plain JVM unit tests.
+            returnDefaultValues = true
+        }
+    }
+
     lint {
         // no suppressions — all issues are addressed
     }

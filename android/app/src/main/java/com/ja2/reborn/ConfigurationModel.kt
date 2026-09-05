@@ -103,6 +103,7 @@ class ConfigurationModel : ViewModel() {
     val mouseMode = MutableLiveData(MouseMode.DEFAULT)
     val expertSettings = MutableLiveData(false)
     val debug = MutableLiveData(false)
+    val mods = MutableLiveData<List<String>>(emptyList())
     val cheatConfig = MutableLiveData(CheatConfig.DEFAULT)
 
     fun setVanillaGameDir(vanillaGameDirSet: String?) {
@@ -139,6 +140,14 @@ class ConfigurationModel : ViewModel() {
 
     fun setDebug(enabled: Boolean) {
         debug.value = enabled
+    }
+
+    /**
+     * Stores the enabled mods in load order. The list holds the folder names of the mods, which is
+     * what the native engine expects in the `mods` array of `ja2.json`.
+     */
+    fun setMods(enabledMods: List<String>) {
+        mods.value = enabledMods
     }
 
     fun setCheatEnabled(enabled: Boolean) {

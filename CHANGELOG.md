@@ -9,6 +9,8 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 ### Added
 
 - Synchronized JA2 Stracciatella upstream changes through `a3bd56e`, including optional stat healing through doctoring and externalized suppression settings.
+- Mod support in the Android launcher: mods in `.ja2/mods` and the mods bundled in the APK assets are discovered, can be enabled, disabled and reordered in a new `Manage Mods` dialog, and are stored in the `mods` array of `ja2.json`.
+- `ja2.json` is now read and written through `Ja2ConfigRepository`, which keeps keys the launcher has no UI for, tolerates comments and trailing commas, backs up unreadable files, and writes atomically.
 
 ### Changed
 

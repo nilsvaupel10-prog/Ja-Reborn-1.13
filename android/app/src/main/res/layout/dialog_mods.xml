@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/launcher_panel"
+    android:orientation="vertical"
+    android:padding="18dp">
+
+    <TextView
+        android:id="@+id/modsDialogTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/mods_dialog_title"
+        android:textColor="#FFFFF3E6"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/modsDialogInfoText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="@string/mods_priority_hint"
+        android:textColor="#DDE7D6C4"
+        android:textSize="13sp" />
+
+    <TextView
+        android:id="@+id/modsDialogPathText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:ellipsize="middle"
+        android:singleLine="true"
+        android:textColor="#FFB5C0CC"
+        android:textSize="12sp"
+        tools:text="Mods folder: /data/user/0/com.ja2.reborn/files/.ja2/mods" />
+
+    <TextView
+        android:id="@+id/modsCounterText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textColor="#FFFFC17A"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        tools:text="1 of 2 mods enabled"
+        tools:visibility="visible" />
+
+    <ScrollView
+        android:id="@+id/modsListScroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="10dp"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:scrollbars="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/modsEmptyText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center"
+                android:textColor="#DDE7D6C4"
+                android:textSize="14sp"
+                android:visibility="gone"
+                tools:text="No mods found. Place mod folders in /data/.../files/.ja2/mods"
+                tools:visibility="visible" />
+
+            <LinearLayout
+                android:id="@+id/modsListContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </LinearLayout>
+    </ScrollView>
+
+    <TextView
+        android:id="@+id/modsWarningText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textColor="#FFE53935"
+        android:textSize="13sp"
+        android:visibility="gone"
+        tools:text="Some enabled mods are missing."
+        tools:visibility="visible" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/modsCopyPathButton"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_weight="1"
+            android:background="@drawable/launcher_button"
+            android:maxLines="1"
+            android:text="@string/mods_copy_path_button"
+            android:textAllCaps="false"
+            android:textColor="#FFFFF3E6"
+            android:textSize="13sp" />
+
+        <Button
+            android:id="@+id/modsRescanButton"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:background="@drawable/launcher_button"
+            android:maxLines="1"
+            android:text="@string/mods_rescan_button"
+            android:textAllCaps="false"
+            android:textColor="#FFFFF3E6"
+            android:textSize="13sp" />
+
+        <Button
+            android:id="@+id/modsCancelButton"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:background="@drawable/launcher_button"
+            android:maxLines="1"
+            android:text="@string/cancel"
+            android:textAllCaps="false"
+            android:textColor="#FFFFF3E6"
+            android:textSize="13sp" />
+
+        <Button
+            android:id="@+id/modsApplyButton"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:background="@drawable/launcher_button"
+            android:maxLines="1"
+            android:text="@string/mods_apply_button"
+            android:textAllCaps="false"
+            android:textColor="#FFFFC17A"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+</LinearLayout>

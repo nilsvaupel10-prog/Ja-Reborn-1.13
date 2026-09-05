@@ -25,6 +25,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.ja2.reborn.*
 import com.ja2.reborn.databinding.FragmentLauncherDataTabBinding
+import com.ja2.reborn.mods.ModScanner
 import java.io.File
 
 
@@ -118,6 +119,13 @@ class DataTabFragment : Fragment() {
             }
         binding.saveGameDirChooseButton.setOnClickListener {
             saveGameDirectoryPicker.launch(null)
+        }
+
+        binding.modsManageButton.setOnClickListener {
+            (activity as? LauncherActivity)?.openModsDialog()
+        }
+        configurationModel.mods.observe(viewLifecycleOwner) {
+            updateModsSummary()
         }
 
         val resolutionModeLabels = resolutionModes.map { LocalizationHelper.getResolutionModeLabel(requireContext(), it) }
@@ -277,6 +285,42 @@ class DataTabFragment : Fragment() {
         applyPresetResolution(mode)
         configurationModel.setScalingQuality(ScalingQuality.DEFAULT)
         configurationModel.setMouseMode(MouseMode.DEFAULT)
+    }
+
+    /** Shows which of the mods in the `.ja2/mods` directory are currently enabled. */
+    private fun updateModsSummary() {
+        val launcherActivity = activity as? LauncherActivity ?: return
+        val enabledIds = configurationModel.mods.value ?: emptyList()
+        val scanResult = launcherActivity.scanMods()
+        val (enabledMods, _) = ModScanner.splitByEnabled(scanResult.mods, enabledIds)
+        val missingCount = enabledMods.count { mod -> !mod.isAvailable }
+
+        val summary = when {
+            enabledMods.isEmpty() && scanResult.mods.isEmpty() ->
+                getString(R.string.mods_summary_none)
+            enabledMods.isEmpty() ->
+                getString(R.string.mods_summary_none_found, scanResult.mods.size)
+            enabledMods.size == 1 ->
+                getString(R.string.mods_summary_enabled_one, enabledMods.first().displayName)
+            else ->
+                getString(
+                    R.string.mods_summary_enabled,
+                    enabledMods.size,
+                    enabledMods.joinToString(", ") { mod -> mod.displayName }
+                )
+        }
+        binding.modsSummaryText.text = if (missingCount > 0) {
+            summary + getString(R.string.mods_summary_missing, missingCount)
+        } else {
+            summary
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Mods can appear in the mods folder while the launcher is open, for example after a
+        // file manager copied them, so the list is scanned again whenever the tab becomes visible.
+        updateModsSummary()
     }
 
     private fun setExpertControlsEnabled(enabled: Boolean) {
