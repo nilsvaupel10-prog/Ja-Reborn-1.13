@@ -23,9 +23,9 @@ jobs:
       uses: android-actions/setup-android@v3
     
     - name: Setup NDK
-      uses: nttpc/setup-ndk@v1
-      with:
-        ndk-version: r27b
+      run: |
+        ANDROID_HOME=$ANDROID_SDK_ROOT
+        sdkmanager --install "ndk;27.2.12479018" --sdk_root=$ANDROID_HOME
     
     - name: Generate keystore
       run: |
@@ -35,7 +35,7 @@ jobs:
     - name: Build Release APK
       run: |
         cd android
-        ./gradlew assembleRelease -x lint --quiet
+        ./gradlew assembleRelease -x lint
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
