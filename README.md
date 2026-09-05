@@ -99,6 +99,7 @@ Common files:
 
 ```text
 ja2.json              Launcher/game configuration
+mods/                 Mod folders that can be enabled in the launcher
 touch_buttons.json    Touch overlay layout and settings
 iconset.json          SVG icon metadata (fill, offset, scale, rotation, flip)
 iconmappings.json     Game icon name to iconset entry mappings
@@ -109,6 +110,27 @@ touch_preset_update_notice.set Touch-layout reset notice preference
 touch_overlay_feature_notice.set One-time touch-overlay feature notice preference
 crashlog-latest.txt   Latest native crash report, when available
 ```
+
+## Mods
+
+The launcher manages the Virtual File System mods of the upstream engine. Mod folders are discovered
+in `.ja2/mods`, and the mods bundled in the APK assets are listed as well. `Manage Mods` on the Data
+tab enables, disables, and orders them, and the resulting folder names are stored in the `mods` array
+of `ja2.json`:
+
+```json
+{
+    "game_dir": "/storage/emulated/0/JA2",
+    "mods": [
+        "stracciatella-gun-pack",
+        "wildfire-maps"
+    ]
+}
+```
+
+The last entry of that list has the highest priority, so it overrides the files of the mods above it -
+the same rule the desktop launcher documents. Saving the configuration keeps every other key of
+`ja2.json`, including settings that have no launcher UI such as `brightness`.
 
 ## Documentation
 

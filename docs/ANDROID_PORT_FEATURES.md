@@ -127,6 +127,32 @@ The main menu also has a separate one-time touch-control hint panel. Its visibil
 
 While the native tutorial is visible, the Android touch overlay is hidden and native action-panel presentation scaling is suspended so tutorial controls remain tappable.
 
+## Mod Support
+
+The Android launcher exposes the mod support of the upstream engine. Mods are plain folders that
+contain a `data` directory with files that shadow or replace the files of the original game, plus an
+optional `manifest.json` with `name`, `version`, and `description`.
+
+The launcher discovers mods in the same locations the native `ModManager` uses:
+
+- `<filesDir>/.ja2/mods/<mod-id>` for mods a user installed. The directory is created by the launcher.
+- `mods/<mod-id>` inside the APK assets for the mods bundled with the game; those are read-only and
+  need a `manifest.json`, which is also a requirement of the engine.
+
+Only names consisting of lowercase letters, digits, and dashes are accepted, because the engine
+ignores every other folder. Folders that were skipped are reported in the mod dialog.
+
+`Manage Mods` on the launcher Data tab opens the mod dialog. It lists enabled mods first in load
+order, with a check box per mod and up and down buttons for the priority. The `mods` array of
+`ja2.json` is written in that order, and the last entry wins over the earlier ones. Missing mod
+folders and mods without a `data` directory are marked, since the engine cannot mount them.
+
+Reading and writing `ja2.json` is lossless. Keys the launcher has no UI for, such as `brightness`,
+`nosound`, or hand written entries, are kept when the file is written. The engine resolves its
+`.ja2` home directory through `Context.getFilesDir()` on Android, so launcher, mod dialog, and game
+always use the same files. No command line arguments are passed to the native `SDL_main`, therefore
+nothing overrides the mod selection from `ja2.json`.
+
 ## Localization
 
 The Android launcher and overlay UI use Android string resources for English and German. The native JA2 game text continues to use the upstream Stracciatella translation data.
@@ -150,6 +176,7 @@ Android-specific runtime files are stored under the app's `.ja2` directory:
 
 ```text
 ja2.json              Launcher and game configuration
+mods/                 Mod folders that can be enabled in the launcher
 touch_buttons.json    Touch overlay layout and actions
 cheats.json           Optional cheat settings
 tutorial.set          Tutorial visibility preference
@@ -174,5 +201,6 @@ Recommended manual checks before publishing a release APK:
 - Check Modern, High Res, and Retro resolution presets on phone and tablet-class displays.
 - Verify Retro bottom-panel and merc portrait touch mapping at 640x480.
 - Toggle cheats from launcher and in-game overlay, then verify player-only behavior in tactical gameplay.
+- Enable, reorder, and disable mods in the launcher, then verify that `ja2.json` lists the selected folders and that a hand written key such as `brightness` survives the save.
 - Build a release APK after deleting caches when native, CMake, SDL Java, or Gradle integration changes were made.
 

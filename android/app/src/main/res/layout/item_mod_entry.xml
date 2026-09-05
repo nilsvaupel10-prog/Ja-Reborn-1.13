@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:background="@drawable/launcher_surface"
+    android:baselineAligned="false"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="8dp"
+    android:paddingTop="6dp"
+    android:paddingEnd="8dp"
+    android:paddingBottom="6dp">
+
+    <CheckBox
+        android:id="@+id/modEnabledCheckbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:buttonTint="#FFD4A84F"
+        android:contentDescription="@string/mods_toggle_cd" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="6dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/modNameText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="#FFFFF3E6"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            tools:text="Wildfire Maps" />
+
+        <TextView
+            android:id="@+id/modIdText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="#FFB5C0CC"
+            android:textSize="12sp"
+            tools:text="wildfire-maps - version 1.0.0" />
+
+        <TextView
+            android:id="@+id/modDescriptionText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:maxLines="3"
+            android:textColor="#DDE7D6C4"
+            android:textSize="12sp"
+            android:visibility="gone"
+            tools:text="Adds new maps to the tactical layer."
+            tools:visibility="visible" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="6dp"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/modPriorityText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="#FFFFC17A"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            tools:text="#1" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/modMoveUpButton"
+                android:layout_width="40dp"
+                android:layout_height="34dp"
+                android:background="@drawable/launcher_button"
+                android:contentDescription="@string/mods_move_up_cd"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:padding="0dp"
+                android:text="@string/mods_move_up_label"
+                android:textAllCaps="false"
+                android:textColor="#FFFFF3E6"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/modMoveDownButton"
+                android:layout_width="40dp"
+                android:layout_height="34dp"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/launcher_button"
+                android:contentDescription="@string/mods_move_down_cd"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:padding="0dp"
+                android:text="@string/mods_move_down_label"
+                android:textAllCaps="false"
+                android:textColor="#FFFFF3E6"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

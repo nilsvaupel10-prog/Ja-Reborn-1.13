@@ -26,6 +26,40 @@
     <string name="save_game_dir_empty_text">Standardverzeichnis verwenden</string>
     <string name="save_game_dir_choose_title">Savegame-Verzeichnis</string>
     <string name="save_game_dir_choose_message">Gib den Pfad zum Savegame-Verzeichnis ein (leer lassen für Standard):</string>
+
+    <!-- Mods -->
+    <string name="mods_title_text">Mods</string>
+    <string name="mods_info_text">Aktiviere und sortiere die Mod-Ordner im mods-Verzeichnis deiner .ja2-Konfiguration. Das Spiel lädt sie beim Start über das virtuelle Dateisystem.</string>
+    <string name="mods_manage_button_label">Mods verwalten</string>
+    <string name="mods_summary_none">Keine Mods installiert</string>
+    <string name="mods_summary_none_found">Keine Mods aktiviert (%1$d gefunden)</string>
+    <string name="mods_summary_enabled_one">1 Mod aktiviert: %1$s</string>
+    <string name="mods_summary_enabled">%1$d Mods aktiviert: %2$s</string>
+    <string name="mods_summary_missing">, %1$d fehlt</string>
+    <string name="mods_dialog_title">Mods</string>
+    <string name="mods_priority_hint">Mods weiter unten in der Liste haben eine höhere Priorität und überschreiben die Mods über ihnen. Neu aktivierte Mods werden am Ende der Liste eingefügt.</string>
+    <string name="mods_folder_path">Mods-Ordner: %1$s</string>
+    <string name="mods_folder_path_short">Mods-Ordner</string>
+    <string name="mods_enabled_count">%1$d von %2$d aktiviert</string>
+    <string name="mods_empty_hint">Keine Mods gefunden. Lege die Mod-Ordner nach %1$s</string>
+    <string name="mods_copy_path_button">Pfad kopieren</string>
+    <string name="mods_rescan_button">Neu einlesen</string>
+    <string name="mods_apply_button">Anwenden</string>
+    <string name="mods_path_copied">Pfad des Mods-Ordners in die Zwischenablage kopiert</string>
+    <string name="mods_dir_create_failed">Der Mods-Ordner konnte nicht angelegt werden. Prüfe den freien Speicher.</string>
+    <string name="mods_saved_toast">%1$d aktivierte Mods in ja2.json gespeichert</string>
+    <string name="mods_save_failed_toast">ja2.json konnte nicht geschrieben werden. Die Mod-Auswahl ist nicht gespeichert.</string>
+    <string name="mods_source_installed">Mods-Ordner</string>
+    <string name="mods_source_bundled">im Spiel enthalten</string>
+    <string name="mods_source_missing">Ordner fehlt</string>
+    <string name="mods_problem_no_data_dir_short">kein data-Ordner</string>
+    <string name="mods_problem_missing">%1$s: Der Mod-Ordner fehlt. Mit diesem Mod kann das Spiel nicht starten.</string>
+    <string name="mods_problem_no_data_dir">%1$s: Der Mod-Ordner hat kein data-Unterverzeichnis, der Start kann fehlschlagen.</string>
+    <string name="mods_problem_ignored">Ordner mit ungültigen Namen ignoriert: %1$s. Mod-Namen dürfen nur aus Kleinbuchstaben, Ziffern und Gedankenstrichen bestehen.</string>
+    <string name="mods_toggle_cd">Diesen Mod aktivieren oder deaktivieren</string>
+    <string name="mods_move_up_cd">Diesen Mod nach oben verschieben und seine Priorität senken</string>
+    <string name="mods_move_down_cd">Diesen Mod nach unten verschieben und seine Priorität erhöhen</string>
+
     <string name="game_version_title_text">Sprache</string>
     <string name="game_version_info_text">
         Wähle die Version deiner originalen Jagged Alliance 2 Spieldateien.

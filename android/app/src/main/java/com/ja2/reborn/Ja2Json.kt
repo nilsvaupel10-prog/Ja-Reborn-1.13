@@ -22,5 +22,13 @@ data class Ja2Json(
     @SerialName("expert_settings")
     val expertSettings: Boolean? = null,
     @SerialName("debug")
-    val debug: Boolean? = null
+    val debug: Boolean? = null,
+    /**
+     * Directory names of the enabled mods in load order, as read and written by the native
+     * engine. Every name refers to a folder below `.ja2/mods`, which the engine mounts as a
+     * virtual file system layer. Layers that come later in this list override the ones before
+     * them, so the last entry has the highest priority.
+     */
+    @SerialName("mods")
+    val mods: List<String>? = null
 )

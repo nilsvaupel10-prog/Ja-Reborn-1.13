@@ -12,34 +12,43 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.ja2.reborn.cheat.CheatOverlayDialog
 import com.ja2.reborn.touch.TouchOverlayController
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
 import org.libsdl.app.SDLActivity
 import org.libsdl.app.SDLSurface
 import java.io.File
-import java.io.IOException
 
 open class RebornActivity : SDLActivity() {
-    private val jsonFormat = Json {
-        ignoreUnknownKeys = true
-    }
-    private val ja2JsonFilename = ".ja2/ja2.json"
-    private val gameSessionFilename = ".ja2/game_session"
+    /** Same `.ja2` directory the launcher writes to and the native engine reads from. */
+    private val configRepository: Ja2ConfigRepository by lazy { Ja2ConfigRepository(applicationContext) }
+
+    /** Configuration of `.ja2/ja2.json`, read once with the defaults as fallback. */
+    private val ja2Config: Ja2Json by lazy { configRepository.load().config }
+
     private var touchOverlayController: TouchOverlayController? = null
 
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LanguageManager.wrapContext(newBase))
     }
 
+    /**
+     * The native engine applies command line arguments *after* `ja2.json`, so a single argument
+     * would win over everything the launcher configured - a `--mod` argument would even replace
+     * the whole `mods` array. JA2 Reborn is only started from its launcher and never with
+     * arguments, so the mod selection stored in `ja2.json` stays authoritative.
+     */
+    override fun getArguments(): Array<String> {
+        return arrayOf()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-        val mouseMode = loadMouseMode()
+        val mouseMode = ja2Config.mouseMode ?: MouseMode.DEFAULT
         SDLSurface.setTouchscreenMouseMode(mouseMode.value)
         super.onCreate(savedInstanceState)
         SDLActivity.setTutorialLanguage(LanguageManager.getSavedLanguage(this) == LanguageManager.Language.GERMAN)
 
-        val resolutionMode = loadResolutionMode()
+        val resolutionMode = ja2Config.resolutionMode ?: ResolutionMode.DEFAULT
+
+        logEnabledMods()
 
         if (mouseMode != MouseMode.HARDWARE) {
             touchOverlayController = TouchOverlayController(
@@ -116,9 +125,9 @@ open class RebornActivity : SDLActivity() {
 
     private fun writeGameSessionFile() {
         try {
-            val dir = File(applicationContext.filesDir, ".ja2")
+            val dir = configRepository.configDir
             if (!dir.exists()) dir.mkdirs()
-            File(dir, "game_session").writeText("running")
+            File(dir, GAME_SESSION_FILE_NAME).writeText("running")
         } catch (e: Exception) {
             Log.w(TAG, "Could not write game session file: ${e.message}")
         }
@@ -126,43 +135,30 @@ open class RebornActivity : SDLActivity() {
 
     private fun deleteGameSessionFile() {
         try {
-            val file = File(applicationContext.filesDir, gameSessionFilename)
+            val file = File(configRepository.configDir, GAME_SESSION_FILE_NAME)
             if (file.exists()) file.delete()
         } catch (e: Exception) {
             Log.w(TAG, "Could not delete game session file: ${e.message}")
         }
     }
 
-    private fun loadMouseMode(): MouseMode {
-        return try {
-            val path = "${applicationContext.filesDir.absolutePath}/$ja2JsonFilename"
-            val json: Ja2Json = jsonFormat.decodeFromString(File(path).readText())
-            json.mouseMode ?: MouseMode.DEFAULT
-        } catch (e: SerializationException) {
-            Log.w(TAG, "Could not decode mouse mode from ja2.json: ${e.message}")
-            MouseMode.DEFAULT
-        } catch (e: IOException) {
-            Log.w(TAG, "Could not read mouse mode from ja2.json: ${e.message}")
-            MouseMode.DEFAULT
-        }
-    }
-
-    private fun loadResolutionMode(): ResolutionMode {
-        return try {
-            val path = "${applicationContext.filesDir.absolutePath}/$ja2JsonFilename"
-            val json: Ja2Json = jsonFormat.decodeFromString(File(path).readText())
-            json.resolutionMode ?: ResolutionMode.DEFAULT
-        } catch (e: SerializationException) {
-            Log.w(TAG, "Could not decode resolution mode from ja2.json: ${e.message}")
-            ResolutionMode.DEFAULT
-        } catch (e: IOException) {
-            Log.w(TAG, "Could not read resolution mode from ja2.json: ${e.message}")
-            ResolutionMode.DEFAULT
+    /**
+     * Logs the mods the game is started with. The engine resolves them relative to the same `.ja2`
+     * home directory (see `find_stracciatella_home` on the Rust side) and mounts their `data`
+     * directories into the virtual file system.
+     */
+    private fun logEnabledMods() {
+        val mods = ja2Config.mods ?: emptyList()
+        if (mods.isEmpty()) {
+            Log.i(TAG, "No mods enabled")
+        } else {
+            Log.i(TAG, "Enabled mods (lowest to highest priority): ${mods.joinToString(", ")}")
         }
     }
 
     companion object {
         private const val TAG = "RebornActivity"
         private const val REQUEST_CODE_IMPORT_PRESET = 1001
+        private const val GAME_SESSION_FILE_NAME = "game_session"
     }
 }
